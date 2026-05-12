@@ -112,6 +112,7 @@ ZAPI_CLIENT_TOKEN=SEU_CLIENT_TOKEN
 | --- | --- | --- |
 | [ ] | Instalar dependencias | `pnpm install` |
 | [ ] | Testar Supabase | `pnpm check:supabase` |
+| [ ] | Testar repositories | `pnpm check:repositories` |
 | [ ] | Validar TypeScript | `pnpm typecheck` |
 | [ ] | Buildar producao | `pnpm build` |
 | [ ] | Subir API local | `pnpm dev` |

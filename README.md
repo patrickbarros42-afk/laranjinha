@@ -149,6 +149,12 @@ Para testar a conexão com o banco depois de preencher `SUPABASE_SERVICE_ROLE_KE
 pnpm check:supabase
 ```
 
+Para testar os repositories com uma inserção real temporária e cleanup automático:
+
+```bash
+pnpm check:repositories
+```
+
 ## Z-API
 
 Documentação útil:
@@ -294,6 +300,7 @@ pnpm build      # compila TypeScript para dist/
 pnpm start      # roda dist/server.js
 pnpm typecheck  # valida tipos sem emitir arquivos
 pnpm check:supabase # valida URL, service role e acesso às tabelas
+pnpm check:repositories # valida repositories com insert/query/delete de smoke test
 pnpm test       # executa vitest
 pnpm lint       # alias para typecheck no MVP
 ```

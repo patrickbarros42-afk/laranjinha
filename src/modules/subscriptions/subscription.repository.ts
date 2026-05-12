@@ -30,7 +30,7 @@ export class SubscriptionRepository {
       .select("id,usuario_id,status,plano,created_at")
       .single();
 
-    if (error) {
+    if (error || !data) {
       throw new AppError("Erro ao criar assinatura.", 500, "supabase_subscription_create_error", error);
     }
 

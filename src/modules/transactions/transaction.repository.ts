@@ -10,7 +10,7 @@ export class TransactionRepository {
       .select("id,usuario_id,tipo,valor,categoria,descricao,data,created_at")
       .single();
 
-    if (error) {
+    if (error || !data) {
       throw new AppError("Erro ao salvar transação.", 500, "supabase_transaction_create_error", error);
     }
 
