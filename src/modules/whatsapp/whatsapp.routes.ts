@@ -14,6 +14,13 @@ whatsappRoutes.get(
   })
 );
 
+whatsappRoutes.get(
+  "/status",
+  asyncHandler(async (request, response) => {
+    await controller.status(request, response);
+  })
+);
+
 whatsappRoutes.post(
   "/webhook",
   asyncHandler(async (request, response) => {

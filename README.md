@@ -161,6 +161,18 @@ Para testar a conexão real com OpenAI, prompts de interpretação e respostas d
 pnpm check:openai
 ```
 
+Para testar a conexão real com a Z-API e o status da instância:
+
+```bash
+pnpm check:zapi
+```
+
+Com o backend rodando, o status também fica disponível em:
+
+```bash
+curl http://localhost:3000/webhooks/whatsapp/status
+```
+
 ## Z-API
 
 Documentação útil:
@@ -308,6 +320,7 @@ pnpm typecheck  # valida tipos sem emitir arquivos
 pnpm check:supabase # valida URL, service role e acesso às tabelas
 pnpm check:repositories # valida repositories com insert/query/delete de smoke test
 pnpm check:openai # valida OpenAI com exemplos reais de interpretação e resposta
+pnpm check:zapi # valida credenciais Z-API e status da instância
 pnpm test       # executa vitest
 pnpm lint       # alias para typecheck no MVP
 ```

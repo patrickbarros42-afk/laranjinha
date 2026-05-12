@@ -68,12 +68,12 @@ where table_schema = 'public'
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Acessar painel Z-API | Abra <https://app.z-api.io/> |
-| [ ] | Criar instancia | Crie uma instancia para o MVP |
-| [ ] | Copiar Instance ID | Usar em `ZAPI_INSTANCE_ID` |
-| [ ] | Copiar Instance Token | Usar em `ZAPI_INSTANCE_TOKEN` |
-| [ ] | Gerar Client Token | Painel Z-API > Seguranca > Token de seguranca da conta |
-| [ ] | Ativar Client Token | Ative somente depois de preencher o backend com o mesmo token |
+| [x] | Acessar painel Z-API | Instancia informada |
+| [x] | Criar instancia | Instancia criada |
+| [x] | Copiar Instance ID | Configurado no `.env` local |
+| [x] | Copiar Instance Token | Configurado no `.env` local |
+| [x] | Gerar Client Token | Configurado no `.env` local |
+| [x] | Ativar Client Token | Token pronto para validacao do webhook |
 
 ## 5. Preencher `.env`
 
@@ -81,9 +81,9 @@ where table_schema = 'public'
 | --- | --- | --- |
 | [ ] | Criar arquivo local | `cp .env.example .env` |
 | [x] | Conferir Supabase URL | `SUPABASE_URL=https://vmzunivplxeqxyzzxskm.supabase.co` |
-| [ ] | Preencher Supabase key | `SUPABASE_SERVICE_ROLE_KEY` |
-| [ ] | Preencher OpenAI | `OPENAI_API_KEY` |
-| [ ] | Preencher Z-API | `ZAPI_INSTANCE_ID`, `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN` |
+| [x] | Preencher Supabase key | Configurada apenas no `.env` local ignorado |
+| [x] | Preencher OpenAI | Configurada apenas no `.env` local ignorado |
+| [x] | Preencher Z-API | Configurada apenas no `.env` local ignorado |
 
 Modelo:
 
@@ -114,6 +114,7 @@ ZAPI_CLIENT_TOKEN=SEU_CLIENT_TOKEN
 | [ ] | Testar Supabase | `pnpm check:supabase` |
 | [ ] | Testar repositories | `pnpm check:repositories` |
 | [ ] | Testar OpenAI | `pnpm check:openai` |
+| [ ] | Testar Z-API | `pnpm check:zapi` |
 | [ ] | Validar TypeScript | `pnpm typecheck` |
 | [ ] | Buildar producao | `pnpm build` |
 | [ ] | Subir API local | `pnpm dev` |
@@ -136,6 +137,7 @@ Resposta esperada:
 | [ ] | Abrir tunel | `ngrok http 3000` |
 | [ ] | Copiar URL publica | Exemplo: `https://abc123.ngrok-free.app` |
 | [ ] | Testar info endpoint | `GET /webhooks/whatsapp/webhook` |
+| [ ] | Testar status Z-API | `GET /webhooks/whatsapp/status` |
 | [ ] | Enviar payload fake Z-API | Usar `Client-Token` igual ao `.env` |
 | [ ] | Conferir logs | Deve aparecer `Z-API webhook received` |
 | [ ] | Conferir Supabase | Deve criar usuario/transacao se Supabase e OpenAI estiverem configurados |
@@ -144,6 +146,12 @@ Info endpoint:
 
 ```bash
 curl "http://localhost:3000/webhooks/whatsapp/webhook"
+```
+
+Status endpoint:
+
+```bash
+curl "http://localhost:3000/webhooks/whatsapp/status"
 ```
 
 Payload fake de texto:

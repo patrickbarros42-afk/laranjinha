@@ -70,3 +70,9 @@ export interface DownloadedMedia {
   mimeType: string;
   filename: string;
 }
+
+export interface ZApiInstanceStatus {
+  connected: boolean;
+  error?: string;
+  smartphoneConnected?: boolean;
+}

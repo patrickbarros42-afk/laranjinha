@@ -6,15 +6,31 @@ import { AppError } from "../../shared/errors/app-error.js";
 import { logger } from "../../shared/logger.js";
 import type { ZApiWebhookPayload } from "../../types/whatsapp.js";
 import { normalizeWebhookMessages } from "./whatsapp-webhook.mapper.js";
+import { WhatsAppService } from "./whatsapp.service.js";
 
 export class WhatsAppWebhookController {
-  constructor(private readonly financeAssistant = new FinanceAssistantService()) {}
+  constructor(
+    private readonly financeAssistant = new FinanceAssistantService(),
+    private readonly whatsapp = new WhatsAppService()
+  ) {}
 
   info(_request: Request, response: Response): void {
     response.status(200).json({
       provider: "z-api",
       endpoint: "/webhooks/whatsapp/webhook",
       expectedHeader: "Client-Token"
+    });
+  }
+
+  async status(_request: Request, response: Response): Promise<void> {
+    const status = await this.whatsapp.getInstanceStatus();
+
+    response.status(200).json({
+      provider: "z-api",
+      instanceId: env.ZAPI_INSTANCE_ID,
+      connected: status.connected,
+      smartphoneConnected: status.smartphoneConnected ?? false,
+      statusMessage: status.error ?? null
     });
   }
 
@@ -33,6 +49,12 @@ export class WhatsAppWebhookController {
         phone: payload.phone,
         type: payload.type,
         status: payload.status,
+        messageKind: detectPayloadKind(payload),
+        fromMe: payload.fromMe,
+        isGroup: payload.isGroup,
+        hasText: Boolean(payload.text?.message),
+        hasAudio: Boolean(payload.audio?.audioUrl),
+        hasImage: Boolean(payload.image?.imageUrl),
         normalizedMessages: messages.length
       },
       "Z-API webhook received"
@@ -58,4 +80,28 @@ export class WhatsAppWebhookController {
       throw new AppError("Webhook Z-API de instância inesperada.", 401, "invalid_zapi_instance");
     }
   }
+}
+
+function detectPayloadKind(payload: ZApiWebhookPayload): string {
+  if (payload.text?.message) {
+    return "text";
+  }
+
+  if (payload.audio?.audioUrl) {
+    return "audio";
+  }
+
+  if (payload.image?.imageUrl) {
+    return "image";
+  }
+
+  if (payload.buttonsResponseMessage?.message) {
+    return "button";
+  }
+
+  if (payload.listResponseMessage?.message) {
+    return "list";
+  }
+
+  return "unknown";
 }

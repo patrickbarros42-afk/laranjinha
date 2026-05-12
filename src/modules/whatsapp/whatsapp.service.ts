@@ -3,7 +3,7 @@ import axios, { type AxiosInstance } from "axios";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/errors/app-error.js";
 import { logger } from "../../shared/logger.js";
-import type { DownloadedMedia } from "../../types/whatsapp.js";
+import type { DownloadedMedia, ZApiInstanceStatus } from "../../types/whatsapp.js";
 
 export class WhatsAppService {
   private readonly client: AxiosInstance;
@@ -39,6 +39,23 @@ export class WhatsAppService {
 
       logger.debug({ phone, messageId }, "Z-API message marked as read");
     }, "mark_as_read");
+  }
+
+  async getInstanceStatus(): Promise<ZApiInstanceStatus> {
+    return this.withRetry(async () => {
+      const response = await this.client.get<ZApiInstanceStatus>("/status");
+
+      logger.info(
+        {
+          connected: response.data.connected,
+          smartphoneConnected: response.data.smartphoneConnected,
+          statusMessage: response.data.error
+        },
+        "Z-API instance status checked"
+      );
+
+      return response.data;
+    }, "instance_status");
   }
 
   async downloadMedia(mediaUrl: string, mimeTypeHint?: string | null): Promise<DownloadedMedia> {
