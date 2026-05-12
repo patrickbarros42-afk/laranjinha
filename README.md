@@ -112,7 +112,7 @@ Veja `.env.example`.
 | `CORS_ORIGIN` | Lista separada por vírgula ou `*` |
 | `RATE_LIMIT_WINDOW_MS` | Janela de rate limit |
 | `RATE_LIMIT_MAX` | Máximo de requests por janela |
-| `SUPABASE_URL` | URL do projeto Supabase |
+| `SUPABASE_URL` | URL raiz do projeto Supabase: `https://vmzunivplxeqxyzzxskm.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key usada somente no backend |
 | `OPENAI_API_KEY` | Chave da OpenAI |
 | `OPENAI_MODEL` | Modelo para interpretar e responder |
@@ -129,13 +129,25 @@ Veja `.env.example`.
 3. Execute `supabase/schema.sql`.
 4. Copie `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` para o `.env`.
 
+Use a URL raiz do projeto, sem `/rest/v1`:
+
+```env
+SUPABASE_URL=https://vmzunivplxeqxyzzxskm.supabase.co
+```
+
 Tabelas criadas:
 
 - `usuarios`
 - `transacoes`
 - `assinaturas`
 
-O schema habilita RLS e cria policies para `service_role`. A service role key deve ficar apenas no servidor.
+O schema habilita RLS e cria policies para `service_role`. A service role key deve ficar apenas no servidor. O fluxo atual cria/busca usuários em `usuarios`, registra movimentações em `transacoes` e cria uma assinatura `trial` em `assinaturas` para cada novo usuário.
+
+Para testar a conexão com o banco depois de preencher `SUPABASE_SERVICE_ROLE_KEY`:
+
+```bash
+pnpm check:supabase
+```
 
 ## Z-API
 
@@ -281,6 +293,7 @@ pnpm dev        # desenvolvimento com tsx watch
 pnpm build      # compila TypeScript para dist/
 pnpm start      # roda dist/server.js
 pnpm typecheck  # valida tipos sem emitir arquivos
+pnpm check:supabase # valida URL, service role e acesso às tabelas
 pnpm test       # executa vitest
 pnpm lint       # alias para typecheck no MVP
 ```

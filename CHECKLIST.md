@@ -28,7 +28,9 @@ Legenda:
 | --- | --- | --- |
 | [x] | README atualizado para Z-API | `README.md` documenta Z-API como camada WhatsApp |
 | [x] | Variaveis Z-API no env example | `.env.example` contem `ZAPI_BASE_URL`, `ZAPI_INSTANCE_ID`, `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN` |
+| [x] | URL Supabase real configurada | `.env.example` usa `https://vmzunivplxeqxyzzxskm.supabase.co` sem `/rest/v1` |
 | [x] | Schema Supabase criado | `supabase/schema.sql` contem `usuarios`, `transacoes`, `assinaturas`, indices e RLS |
+| [x] | Tabelas usadas pelo backend | `usuarios`, `transacoes` e `assinaturas` sao acessadas pelos repositories |
 | [x] | Backend organizado | `src/config`, `src/infra`, `src/modules`, `src/shared`, `src/types`, `src/prompts` |
 | [x] | Typecheck executado | `pnpm typecheck` |
 | [x] | Build executado | `pnpm build` |
@@ -37,21 +39,21 @@ Legenda:
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Acessar Supabase | Abra <https://supabase.com/dashboard> |
-| [ ] | Criar novo projeto | Nome sugerido: `meu-laranjinha` |
-| [ ] | Aguardar provisionamento | Espere liberar Database/API settings |
-| [ ] | Copiar Project URL | `Project Settings > API > Project URL` |
+| [x] | Acessar Supabase | Projeto ja criado |
+| [x] | Criar novo projeto | Projeto ja criado |
+| [x] | Aguardar provisionamento | Projeto provisionado |
+| [x] | Project URL configurada | `https://vmzunivplxeqxyzzxskm.supabase.co` |
 | [ ] | Copiar service role key | `Project Settings > API > service_role`; usar somente no backend |
 
 ## 3. Rodar `schema.sql`
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Abrir SQL Editor | Supabase > `SQL Editor > New query` |
-| [ ] | Colar schema | Copie todo `supabase/schema.sql` |
-| [ ] | Executar query | Clique em `Run` |
-| [ ] | Conferir tabelas | `usuarios`, `transacoes`, `assinaturas` |
-| [ ] | Conferir RLS | RLS deve estar habilitado nas tres tabelas |
+| [x] | Abrir SQL Editor | Schema ja executado |
+| [x] | Colar schema | Schema ja executado |
+| [x] | Executar query | Schema executado com sucesso |
+| [x] | Conferir tabelas | `usuarios`, `transacoes`, `assinaturas` |
+| [x] | Conferir RLS | RLS habilitado pelo `schema.sql` |
 
 Query de conferencia:
 
@@ -78,7 +80,8 @@ where table_schema = 'public'
 | Status | Etapa | Comando/valor |
 | --- | --- | --- |
 | [ ] | Criar arquivo local | `cp .env.example .env` |
-| [ ] | Preencher Supabase | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| [x] | Conferir Supabase URL | `SUPABASE_URL=https://vmzunivplxeqxyzzxskm.supabase.co` |
+| [ ] | Preencher Supabase key | `SUPABASE_SERVICE_ROLE_KEY` |
 | [ ] | Preencher OpenAI | `OPENAI_API_KEY` |
 | [ ] | Preencher Z-API | `ZAPI_INSTANCE_ID`, `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN` |
 
@@ -92,7 +95,7 @@ APP_TIMEZONE=America/Sao_Paulo
 CORS_ORIGIN=*
 RATE_LIMIT_WINDOW_MS=60000
 RATE_LIMIT_MAX=120
-SUPABASE_URL=https://SEU-PROJETO.supabase.co
+SUPABASE_URL=https://vmzunivplxeqxyzzxskm.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=SUA_SERVICE_ROLE_KEY
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4.1-mini
@@ -108,6 +111,7 @@ ZAPI_CLIENT_TOKEN=SEU_CLIENT_TOKEN
 | Status | Etapa | Comando |
 | --- | --- | --- |
 | [ ] | Instalar dependencias | `pnpm install` |
+| [ ] | Testar Supabase | `pnpm check:supabase` |
 | [ ] | Validar TypeScript | `pnpm typecheck` |
 | [ ] | Buildar producao | `pnpm build` |
 | [ ] | Subir API local | `pnpm dev` |

@@ -34,6 +34,14 @@ export interface Transaction {
   created_at: string;
 }
 
+export interface Subscription {
+  id: string;
+  usuario_id: string;
+  status: "trial" | "active" | "past_due" | "canceled";
+  plano: string;
+  created_at: string;
+}
+
 export interface CreateTransactionInput {
   usuario_id: string;
   tipo: TransactionType;

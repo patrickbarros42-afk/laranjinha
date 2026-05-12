@@ -10,7 +10,10 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default("*"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
-  SUPABASE_URL: z.string().url(),
+  SUPABASE_URL: z
+    .string()
+    .url()
+    .refine((url) => !url.includes("/rest/v1"), "Use the Supabase project root URL without /rest/v1"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   OPENAI_API_KEY: z.string().min(1),
   OPENAI_MODEL: z.string().default("gpt-4.1-mini"),
