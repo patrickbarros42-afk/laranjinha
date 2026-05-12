@@ -20,14 +20,7 @@ export function createApp(): express.Express {
   app.use(compression());
   app.use(requestLogger);
   app.use(apiRateLimiter);
-  app.use(
-    express.json({
-      limit: "2mb",
-      verify: (request, _response, buffer) => {
-        (request as express.Request).rawBody = Buffer.from(buffer);
-      }
-    })
-  );
+  app.use(express.json({ limit: "2mb" }));
 
   app.use("/health", healthRoutes);
   app.use("/webhooks/whatsapp", whatsappRoutes);

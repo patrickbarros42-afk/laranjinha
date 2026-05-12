@@ -6,6 +6,7 @@ import { TransactionRepository } from "../transactions/transaction.repository.js
 import { UserRepository } from "../users/user.repository.js";
 import { WhatsAppService } from "../whatsapp/whatsapp.service.js";
 import { endOfMonth, endOfWeek, startOfMonth, startOfWeek, todayIsoDate } from "../../shared/utils/dates.js";
+import { logger } from "../../shared/logger.js";
 import { formatMoney } from "../../shared/utils/money.js";
 import type { TransactionSummary } from "../../types/finance.js";
 import type { NormalizedWhatsAppMessage } from "../../types/whatsapp.js";
@@ -21,7 +22,11 @@ export class FinanceAssistantService {
   ) {}
 
   async handleIncomingMessage(message: NormalizedWhatsAppMessage): Promise<void> {
-    await this.whatsapp.markAsRead(message.messageId);
+    try {
+      await this.whatsapp.markAsRead(message.from, message.messageId);
+    } catch (error) {
+      logger.warn({ error, messageId: message.messageId, from: message.from }, "Could not mark Z-API message as read");
+    }
 
     const user = await this.users.findOrCreate({
       phone: message.from,
@@ -57,12 +62,12 @@ export class FinanceAssistantService {
   }
 
   private async extractText(message: NormalizedWhatsAppMessage): Promise<string | null> {
-    if (message.type === "text" || message.type === "button") {
+    if (message.type === "text" || message.type === "button" || message.type === "list") {
       return message.text?.trim() || null;
     }
 
-    if (message.type === "audio" && message.mediaId) {
-      const media = await this.whatsapp.downloadMedia(message.mediaId);
+    if (message.type === "audio" && message.mediaUrl) {
+      const media = await this.whatsapp.downloadMedia(message.mediaUrl, message.mimeType);
       return this.transcription.transcribe(media);
     }
 

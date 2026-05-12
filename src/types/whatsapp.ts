@@ -1,62 +1,56 @@
-export interface WhatsAppWebhookPayload {
-  object: string;
-  entry?: WhatsAppEntry[];
-}
+export type WhatsAppMessageType = "text" | "audio" | "image" | "button" | "list" | "unknown";
 
-export interface WhatsAppEntry {
-  id: string;
-  changes?: WhatsAppChange[];
-}
-
-export interface WhatsAppChange {
-  field: string;
-  value: {
-    messaging_product?: string;
-    metadata?: {
-      display_phone_number?: string;
-      phone_number_id?: string;
-    };
-    contacts?: WhatsAppContact[];
-    messages?: WhatsAppIncomingMessage[];
-    statuses?: unknown[];
-  };
-}
-
-export interface WhatsAppContact {
-  profile?: {
-    name?: string;
-  };
-  wa_id: string;
-}
-
-export type WhatsAppMessageType = "text" | "audio" | "image" | "button" | "interactive" | "unknown";
-
-export interface WhatsAppIncomingMessage {
-  from: string;
-  id: string;
-  timestamp: string;
-  type?: WhatsAppMessageType;
+export interface ZApiWebhookPayload {
+  isStatusReply?: boolean;
+  connectedPhone?: string;
+  waitingMessage?: boolean;
+  isEdit?: boolean;
+  isGroup?: boolean;
+  isNewsletter?: boolean;
+  instanceId?: string;
+  messageId?: string;
+  phone?: string;
+  fromMe?: boolean;
+  momment?: number;
+  status?: string;
+  chatName?: string;
+  senderName?: string;
+  participantPhone?: string | null;
+  broadcast?: boolean;
+  type?: string;
+  fromApi?: boolean;
   text?: {
-    body?: string;
+    message?: string;
+    description?: string;
+    title?: string;
+    url?: string;
+    thumbnailUrl?: string;
   };
   audio?: {
-    id?: string;
-    mime_type?: string;
-    sha256?: string;
-    voice?: boolean;
+    ptt?: boolean;
+    seconds?: number;
+    audioUrl?: string;
+    mimeType?: string;
+    viewOnce?: boolean;
   };
   image?: {
-    id?: string;
-    mime_type?: string;
-    sha256?: string;
+    imageUrl?: string;
+    thumbnailUrl?: string;
+    mimeType?: string;
     caption?: string;
+    downloadError?: string | null;
+    width?: number;
+    height?: number;
+    viewOnce?: boolean;
   };
-  button?: {
-    text?: string;
-    payload?: string;
+  buttonsResponseMessage?: {
+    buttonId?: string;
+    message?: string;
   };
-  interactive?: {
-    type?: string;
+  listResponseMessage?: {
+    message?: string;
+    title?: string;
+    selectedRowId?: string;
   };
 }
 
@@ -66,7 +60,7 @@ export interface NormalizedWhatsAppMessage {
   contactName: string | null;
   type: WhatsAppMessageType;
   text: string | null;
-  mediaId: string | null;
+  mediaUrl: string | null;
   mimeType: string | null;
   timestamp: string;
 }

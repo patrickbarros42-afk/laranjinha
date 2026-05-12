@@ -10,7 +10,7 @@ export const whatsappRoutes: ExpressRouter = Router();
 whatsappRoutes.get(
   "/webhook",
   asyncHandler(async (request, response) => {
-    controller.verify(request, response);
+    controller.info(request, response);
   })
 );
 

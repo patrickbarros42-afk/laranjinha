@@ -1,59 +1,59 @@
-# CHECKLIST - Teste ponta a ponta do Meu Laranjinha
+# CHECKLIST - Z-API + Meu Laranjinha
 
-Use este checklist para sair do repositório local até o teste real via WhatsApp e preparação de deploy no Railway.
+Checklist atualizado para testar o backend ponta a ponta com Z-API, OpenAI e Supabase. O numero ainda nao precisa ser conectado; as etapas de QR Code ficam preparadas para quando voce decidir ativar a instancia.
 
-Legenda de status:
+Legenda:
 
-- `[x]` concluído no repositório
-- `[ ]` pendente para execução manual
-- `[~]` em andamento ou depende de credenciais externas
+- `[x]` concluido no repositorio
+- `[ ]` pendente para execucao manual
+- `[~]` depende de credenciais externas
 
-## 0. Links necessários
+## 0. Links necessarios
 
 - [Supabase Dashboard](https://supabase.com/dashboard)
-- [Supabase SQL Editor docs](https://supabase.com/docs/guides/database/overview)
 - [OpenAI API Keys](https://platform.openai.com/api-keys)
-- [Meta for Developers](https://developers.facebook.com/apps/)
-- [WhatsApp Cloud API - Get Started](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started)
-- [WhatsApp Cloud API - Webhooks](https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks)
-- [Graph API Explorer](https://developers.facebook.com/tools/explorer/)
+- [Z-API Dashboard](https://app.z-api.io/)
+- [Z-API Docs](https://developer.z-api.io/)
+- [Z-API - Enviar texto](https://developer.z-api.io/message/send-text.md)
+- [Z-API - Webhook ao receber](https://developer.z-api.io/webhooks/on-message-received.md)
+- [Z-API - Exemplos de webhook](https://developer.z-api.io/webhooks/on-message-received-examples)
+- [Z-API - QR Code imagem](https://developer.z-api.io/instance/qr-code-image.md)
+- [Z-API - Client-Token](https://developer.z-api.io/security/client-token.md)
 - [ngrok](https://ngrok.com/)
 - [Railway Dashboard](https://railway.app/dashboard)
-- [Railway Variables docs](https://docs.railway.app/guides/variables)
 
-## 1. Conferência do projeto
+## 1. Conferencia do projeto
 
 | Status | Etapa | Como validar |
 | --- | --- | --- |
-| [x] | README revisado | `README.md` contém instalação, env, Supabase, WhatsApp e Railway |
-| [x] | Schema Supabase criado | `supabase/schema.sql` contém `usuarios`, `transacoes`, `assinaturas`, índices e RLS |
-| [x] | Env example criado | `.env.example` lista todas as variáveis necessárias |
-| [x] | Railway configurado | `railway.json` define build e start |
+| [x] | README atualizado para Z-API | `README.md` documenta Z-API como camada WhatsApp |
+| [x] | Variaveis Z-API no env example | `.env.example` contem `ZAPI_BASE_URL`, `ZAPI_INSTANCE_ID`, `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN` |
+| [x] | Schema Supabase criado | `supabase/schema.sql` contem `usuarios`, `transacoes`, `assinaturas`, indices e RLS |
 | [x] | Backend organizado | `src/config`, `src/infra`, `src/modules`, `src/shared`, `src/types`, `src/prompts` |
-| [x] | Typecheck local executado | `pnpm typecheck` |
-| [x] | Build local executado | `pnpm build` |
+| [x] | Typecheck executado | `pnpm typecheck` |
+| [x] | Build executado | `pnpm build` |
 
 ## 2. Criar projeto no Supabase
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
 | [ ] | Acessar Supabase | Abra <https://supabase.com/dashboard> |
-| [ ] | Criar novo projeto | Escolha organização, nome `meu-laranjinha`, senha do banco e região próxima ao Brasil |
-| [ ] | Aguardar provisionamento | Espere o painel liberar Database/API settings |
+| [ ] | Criar novo projeto | Nome sugerido: `meu-laranjinha` |
+| [ ] | Aguardar provisionamento | Espere liberar Database/API settings |
 | [ ] | Copiar Project URL | `Project Settings > API > Project URL` |
-| [ ] | Copiar service role key | `Project Settings > API > service_role`; manter somente no backend |
+| [ ] | Copiar service role key | `Project Settings > API > service_role`; usar somente no backend |
 
 ## 3. Rodar `schema.sql`
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Abrir SQL Editor | No Supabase: `SQL Editor > New query` |
-| [ ] | Colar schema | Copie todo o conteúdo de `supabase/schema.sql` |
+| [ ] | Abrir SQL Editor | Supabase > `SQL Editor > New query` |
+| [ ] | Colar schema | Copie todo `supabase/schema.sql` |
 | [ ] | Executar query | Clique em `Run` |
-| [ ] | Conferir tabelas | `Table Editor` deve exibir `usuarios`, `transacoes`, `assinaturas` |
-| [ ] | Conferir RLS | Cada tabela deve estar com RLS habilitado |
+| [ ] | Conferir tabelas | `usuarios`, `transacoes`, `assinaturas` |
+| [ ] | Conferir RLS | RLS deve estar habilitado nas tres tabelas |
 
-Query rápida de conferência:
+Query de conferencia:
 
 ```sql
 select table_name
@@ -62,18 +62,27 @@ where table_schema = 'public'
   and table_name in ('usuarios', 'transacoes', 'assinaturas');
 ```
 
-## 4. Preencher `.env`
+## 4. Criar instancia Z-API
+
+| Status | Etapa | Detalhes |
+| --- | --- | --- |
+| [ ] | Acessar painel Z-API | Abra <https://app.z-api.io/> |
+| [ ] | Criar instancia | Crie uma instancia para o MVP |
+| [ ] | Copiar Instance ID | Usar em `ZAPI_INSTANCE_ID` |
+| [ ] | Copiar Instance Token | Usar em `ZAPI_INSTANCE_TOKEN` |
+| [ ] | Gerar Client Token | Painel Z-API > Seguranca > Token de seguranca da conta |
+| [ ] | Ativar Client Token | Ative somente depois de preencher o backend com o mesmo token |
+
+## 5. Preencher `.env`
 
 | Status | Etapa | Comando/valor |
 | --- | --- | --- |
 | [ ] | Criar arquivo local | `cp .env.example .env` |
-| [ ] | Preencher Supabase | `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` |
+| [ ] | Preencher Supabase | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | [ ] | Preencher OpenAI | `OPENAI_API_KEY` |
-| [ ] | Definir verify token | `WHATSAPP_VERIFY_TOKEN=um-token-longo-e-secreto` |
-| [ ] | Preencher Meta | `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_API_VERSION` |
-| [ ] | Opcional: assinatura Meta | `META_APP_SECRET` com o App Secret da Meta |
+| [ ] | Preencher Z-API | `ZAPI_INSTANCE_ID`, `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN` |
 
-Modelo mínimo para teste local:
+Modelo:
 
 ```env
 NODE_ENV=development
@@ -88,20 +97,19 @@ SUPABASE_SERVICE_ROLE_KEY=SUA_SERVICE_ROLE_KEY
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4.1-mini
 OPENAI_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
-WHATSAPP_VERIFY_TOKEN=troque-por-um-token-secreto
-WHATSAPP_ACCESS_TOKEN=SEU_TOKEN_META
-WHATSAPP_PHONE_NUMBER_ID=SEU_PHONE_NUMBER_ID
-WHATSAPP_API_VERSION=v22.0
-META_APP_SECRET=
+ZAPI_BASE_URL=https://api.z-api.io
+ZAPI_INSTANCE_ID=SEU_INSTANCE_ID
+ZAPI_INSTANCE_TOKEN=SEU_INSTANCE_TOKEN
+ZAPI_CLIENT_TOKEN=SEU_CLIENT_TOKEN
 ```
 
-## 5. Rodar localmente
+## 6. Rodar localmente
 
 | Status | Etapa | Comando |
 | --- | --- | --- |
-| [ ] | Instalar dependências | `pnpm install` |
+| [ ] | Instalar dependencias | `pnpm install` |
 | [ ] | Validar TypeScript | `pnpm typecheck` |
-| [ ] | Buildar produção | `pnpm build` |
+| [ ] | Buildar producao | `pnpm build` |
 | [ ] | Subir API local | `pnpm dev` |
 | [ ] | Testar healthcheck | `curl http://localhost:3000/health` |
 
@@ -115,45 +123,72 @@ Resposta esperada:
 }
 ```
 
-## 6. Testar webhook do WhatsApp localmente
+## 7. Testar webhook local sem conectar o numero
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Abrir túnel | `ngrok http 3000` |
-| [ ] | Copiar URL pública | Exemplo: `https://abc123.ngrok-free.app` |
-| [ ] | Configurar callback na Meta | `https://abc123.ngrok-free.app/webhooks/whatsapp/webhook` |
-| [ ] | Informar verify token | Mesmo valor de `WHATSAPP_VERIFY_TOKEN` |
-| [ ] | Clicar em Verify and save | A Meta deve aceitar o webhook |
-| [ ] | Assinar campo `messages` | Em Webhooks, assine o evento `messages` |
+| [ ] | Abrir tunel | `ngrok http 3000` |
+| [ ] | Copiar URL publica | Exemplo: `https://abc123.ngrok-free.app` |
+| [ ] | Testar info endpoint | `GET /webhooks/whatsapp/webhook` |
+| [ ] | Enviar payload fake Z-API | Usar `Client-Token` igual ao `.env` |
+| [ ] | Conferir logs | Deve aparecer `Z-API webhook received` |
+| [ ] | Conferir Supabase | Deve criar usuario/transacao se Supabase e OpenAI estiverem configurados |
 
-Teste manual do endpoint de verificação:
+Info endpoint:
 
 ```bash
-curl "https://SUA-URL-NGROK/webhooks/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=SEU_VERIFY_TOKEN&hub.challenge=123456"
+curl "http://localhost:3000/webhooks/whatsapp/webhook"
 ```
 
-Resposta esperada:
+Payload fake de texto:
 
-```txt
-123456
+```bash
+curl -X POST "http://localhost:3000/webhooks/whatsapp/webhook" \
+  -H "Content-Type: application/json" \
+  -H "Client-Token: SEU_ZAPI_CLIENT_TOKEN" \
+  -d '{
+    "instanceId": "SEU_ZAPI_INSTANCE_ID",
+    "messageId": "teste-texto-001",
+    "phone": "5511999999999",
+    "fromMe": false,
+    "isGroup": false,
+    "momment": 1778590000000,
+    "status": "RECEIVED",
+    "senderName": "Teste Local",
+    "type": "ReceivedCallback",
+    "text": {
+      "message": "gastei 18 reais na padaria"
+    }
+  }'
 ```
 
-## 7. Testar mensagem de texto
+Observacao: sem numero conectado, o backend pode processar OpenAI/Supabase e falhar ao marcar como lida ou enviar a resposta pela Z-API. Isso e esperado ate conectar a instancia.
+
+## 8. Configurar webhook na Z-API
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Adicionar número de teste | No painel WhatsApp Cloud API, adicione seu número como recipient permitido |
-| [ ] | Confirmar token ativo | Tokens temporários expiram; gere outro se necessário |
-| [ ] | Enviar mensagem ao número da Meta | Pelo WhatsApp: `gastei 18 reais na padaria` |
-| [ ] | Conferir resposta automática | Esperado: confirmação leve do Laranjinha |
-| [ ] | Conferir Supabase | Tabela `usuarios` com telefone e `transacoes` com despesa |
-| [ ] | Testar consulta do dia | Envie: `quanto gastei hoje?` |
-| [ ] | Testar consulta do mês | Envie: `quanto gastei esse mês?` |
-| [ ] | Testar categoria | Envie: `quanto gastei com ifood?` |
-| [ ] | Testar resumo semanal | Envie: `resumo da semana` |
-| [ ] | Testar resumo mensal | Envie: `resumo do mês` |
+| [ ] | Abrir instancia Z-API | Painel Z-API > Instancia do MVP |
+| [ ] | Abrir Webhooks | Configuracao de webhook de mensagens recebidas |
+| [ ] | Definir URL local via ngrok | `https://SUA-URL-NGROK/webhooks/whatsapp/webhook` |
+| [ ] | Salvar webhook | Z-API exige HTTPS |
+| [ ] | Garantir Client-Token | Token configurado/ativo no painel e no `.env` |
 
-SQL para conferir transações:
+## 9. Testar texto real depois de conectar
+
+| Status | Etapa | Detalhes |
+| --- | --- | --- |
+| [ ] | Conectar numero via QR Code | Ver secao 12 |
+| [ ] | Enviar mensagem ao numero conectado | `gastei 18 reais na padaria` |
+| [ ] | Conferir resposta automatica | Laranjinha deve responder no WhatsApp |
+| [ ] | Conferir Supabase | `usuarios` e `transacoes` atualizadas |
+| [ ] | Testar consulta do dia | `quanto gastei hoje?` |
+| [ ] | Testar consulta do mes | `quanto gastei esse mês?` |
+| [ ] | Testar categoria | `quanto gastei com ifood?` |
+| [ ] | Testar resumo semanal | `resumo da semana` |
+| [ ] | Testar resumo mensal | `resumo do mês` |
+
+SQL:
 
 ```sql
 select u.telefone, t.tipo, t.valor, t.categoria, t.descricao, t.data, t.created_at
@@ -163,64 +198,112 @@ order by t.created_at desc
 limit 20;
 ```
 
-## 8. Testar áudio
+## 10. Testar audio real depois de conectar
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Enviar áudio curto | Exemplo falado: "gastei 32 reais no mercado hoje" |
-| [ ] | Conferir logs locais | Deve aparecer processamento sem erro de download/transcrição |
-| [ ] | Conferir resposta | Laranjinha deve confirmar a transação |
+| [ ] | Enviar audio curto | Fale: "gastei 32 reais no mercado hoje" |
+| [ ] | Conferir payload | Z-API deve enviar `audio.audioUrl` |
+| [ ] | Conferir logs | Deve baixar midia e transcrever com OpenAI |
+| [ ] | Conferir resposta | Laranjinha deve confirmar a transacao |
 | [ ] | Conferir Supabase | Nova linha em `transacoes` |
 
-Observações:
+Payload fake de audio para validar parser/download com uma URL propria:
 
-- O token da Meta precisa permitir download de mídia.
-- O arquivo de áudio é baixado via Graph API e transcrito com `OPENAI_TRANSCRIPTION_MODEL`.
-- Se a transcrição falhar, confira `OPENAI_API_KEY`, saldo/limite da OpenAI e o tipo de mídia recebido.
+```bash
+curl -X POST "http://localhost:3000/webhooks/whatsapp/webhook" \
+  -H "Content-Type: application/json" \
+  -H "Client-Token: SEU_ZAPI_CLIENT_TOKEN" \
+  -d '{
+    "instanceId": "SEU_ZAPI_INSTANCE_ID",
+    "messageId": "teste-audio-001",
+    "phone": "5511999999999",
+    "fromMe": false,
+    "isGroup": false,
+    "momment": 1778590000000,
+    "status": "RECEIVED",
+    "senderName": "Teste Local",
+    "type": "ReceivedCallback",
+    "audio": {
+      "ptt": true,
+      "seconds": 4,
+      "audioUrl": "https://URL-PUBLICA-DE-UM-ARQUIVO.ogg",
+      "mimeType": "audio/ogg; codecs=opus"
+    }
+  }'
+```
 
-## 9. Testar imagem/nota fiscal
+## 11. Testar imagem/nota fiscal
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
-| [ ] | Enviar imagem | Envie uma nota fiscal ou foto qualquer |
-| [ ] | Conferir resposta | MVP deve responder que OCR está preparado para etapa futura |
-| [ ] | Garantir não-crash | Logs não devem mostrar erro fatal |
+| [ ] | Enviar imagem real | Depois de conectar o numero |
+| [ ] | Conferir resposta | MVP responde que OCR fica para etapa futura |
+| [ ] | Garantir nao-crash | Logs sem erro fatal |
 
-## 10. Preparar deploy no Railway
+## 12. Como conectar o QR Code depois
+
+| Status | Etapa | Detalhes |
+| --- | --- | --- |
+| [ ] | Abrir Z-API Dashboard | <https://app.z-api.io/> |
+| [ ] | Entrar na instancia | A mesma de `ZAPI_INSTANCE_ID` |
+| [ ] | Abrir conexao por QR Code | Painel da instancia > conectar WhatsApp |
+| [ ] | Abrir WhatsApp no celular | WhatsApp > Aparelhos conectados |
+| [ ] | Conectar aparelho | Escaneie o QR Code exibido na Z-API |
+| [ ] | Aguardar status conectado | A instancia deve ficar `connected=true` |
+| [ ] | Confirmar webhook | URL deve apontar para `/webhooks/whatsapp/webhook` |
+
+Opcional via API, para tela propria futura:
+
+```bash
+curl "https://api.z-api.io/instances/SEU_INSTANCE_ID/token/SEU_INSTANCE_TOKEN/qr-code/image" \
+  -H "Client-Token: SEU_CLIENT_TOKEN"
+```
+
+Boas praticas:
+
+- Busque um QR Code novo a cada 10 a 20 segundos.
+- Pare depois de 3 tentativas sem scan e ofereca um botao para gerar novamente.
+- O WhatsApp invalida QR Codes rapidamente.
+
+## 13. Preparar deploy no Railway
 
 | Status | Etapa | Detalhes |
 | --- | --- | --- |
 | [ ] | Criar projeto Railway | Abra <https://railway.app/dashboard> |
-| [ ] | Conectar repositório GitHub | Selecione este repositório |
-| [ ] | Configurar variáveis | Copie as mesmas variáveis do `.env`, sem aspas |
+| [ ] | Conectar GitHub | Selecione este repositorio |
+| [ ] | Configurar variaveis | Copie as mesmas variaveis do `.env` |
 | [ ] | Confirmar build command | `pnpm install --frozen-lockfile && pnpm build` |
 | [ ] | Confirmar start command | `pnpm start` |
-| [ ] | Fazer deploy | Railway deve expor uma URL pública |
-| [ ] | Testar healthcheck Railway | `https://SUA-URL.up.railway.app/health` |
-| [ ] | Atualizar webhook Meta | Callback: `https://SUA-URL.up.railway.app/webhooks/whatsapp/webhook` |
-| [ ] | Testar texto em produção | Envie `gastei 18 reais na padaria` |
-| [ ] | Testar áudio em produção | Envie áudio curto |
+| [ ] | Fazer deploy | Railway deve gerar URL publica |
+| [ ] | Testar healthcheck | `https://SUA-URL.up.railway.app/health` |
+| [ ] | Atualizar webhook Z-API | `https://SUA-URL.up.railway.app/webhooks/whatsapp/webhook` |
+| [ ] | Testar texto em producao | Depois de conectar o numero |
+| [ ] | Testar audio em producao | Depois de conectar o numero |
 
-## 11. Problemas comuns
+## 14. Problemas comuns
 
-| Sintoma | Causa provável | Correção |
+| Sintoma | Causa provavel | Correcao |
 | --- | --- | --- |
-| Meta não verifica webhook | URL errada ou token divergente | Conferir path `/webhooks/whatsapp/webhook` e `WHATSAPP_VERIFY_TOKEN` |
-| API não sobe | `.env` incompleto | Verificar erro de Zod no terminal |
-| WhatsApp não responde | Token Meta expirado ou phone number id errado | Gerar token novo e conferir `WHATSAPP_PHONE_NUMBER_ID` |
-| Não salva no Supabase | Service role key incorreta ou schema não rodado | Conferir env e tabelas |
-| OpenAI falha | Chave inválida, modelo indisponível ou sem saldo | Conferir `OPENAI_API_KEY`, billing e modelos |
-| Áudio falha | Permissão/token de mídia ou transcrição | Conferir logs, token Meta e `OPENAI_TRANSCRIPTION_MODEL` |
+| Webhook retorna 401 | `Client-Token` ausente ou diferente | Conferir `ZAPI_CLIENT_TOKEN` no painel, `.env` e request |
+| Payload ignorado | `fromMe=true`, grupo ou `type` diferente de `ReceivedCallback` | Testar com mensagem individual recebida |
+| API nao sobe | `.env` incompleto | Ver erro de Zod no terminal |
+| Nao salva no Supabase | Service role key errada ou schema nao rodado | Conferir env e tabelas |
+| OpenAI falha | Chave invalida, modelo indisponivel ou sem saldo | Conferir `OPENAI_API_KEY`, billing e modelos |
+| Resposta nao chega no WhatsApp | Instancia Z-API desconectada ou token errado | Conectar QR Code e conferir credenciais |
+| Audio falha | `audioUrl` expirado/privado ou transcricao indisponivel | Reenviar audio e conferir `OPENAI_TRANSCRIPTION_MODEL` |
 
-## 12. Critério de pronto do MVP
+## 15. Criterio de pronto do MVP
 
-| Status | Critério |
+| Status | Criterio |
 | --- | --- |
-| [ ] | Texto "gastei 18 reais na padaria" cria usuário, cria transação e responde no WhatsApp |
-| [ ] | Pergunta "quanto gastei hoje?" responde com total correto |
-| [ ] | Pergunta "quanto gastei esse mês?" responde com total correto |
-| [ ] | Pergunta "quanto gastei com ifood?" filtra descrição/categoria |
-| [ ] | Áudio curto é transcrito, interpretado, salvo e respondido |
-| [ ] | Imagem recebe resposta controlada sem quebrar o backend |
+| [ ] | Webhook Z-API com texto cria usuario, cria transacao e tenta responder |
+| [ ] | Numero conectado via QR Code |
+| [ ] | Texto "gastei 18 reais na padaria" responde no WhatsApp |
+| [ ] | Pergunta "quanto gastei hoje?" responde total correto |
+| [ ] | Pergunta "quanto gastei esse mês?" responde total correto |
+| [ ] | Pergunta "quanto gastei com ifood?" filtra descricao/categoria |
+| [ ] | Audio curto e transcrito, interpretado, salvo e respondido |
+| [ ] | Imagem recebe resposta controlada sem quebrar backend |
 | [ ] | Deploy Railway passa build e `/health` responde |
-| [ ] | Webhook Meta em produção recebe e processa mensagens |
+| [ ] | Webhook Z-API em producao recebe e processa mensagens |

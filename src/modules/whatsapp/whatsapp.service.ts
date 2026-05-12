@@ -10,10 +10,10 @@ export class WhatsAppService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: `https://graph.facebook.com/${env.WHATSAPP_API_VERSION}`,
+      baseURL: `${env.ZAPI_BASE_URL}/instances/${env.ZAPI_INSTANCE_ID}/token/${env.ZAPI_INSTANCE_TOKEN}`,
       timeout: 15_000,
       headers: {
-        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        "Client-Token": env.ZAPI_CLIENT_TOKEN,
         "Content-Type": "application/json"
       }
     });
@@ -21,57 +21,44 @@ export class WhatsAppService {
 
   async sendText(to: string, body: string): Promise<void> {
     await this.withRetry(async () => {
-      await this.client.post(`/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to,
-        type: "text",
-        text: {
-          preview_url: false,
-          body
-        }
+      const response = await this.client.post("/send-text", {
+        phone: to,
+        message: body
       });
+
+      logger.info({ to, messageId: response.data?.messageId, zaapId: response.data?.zaapId }, "Z-API text sent");
     }, "send_text");
   }
 
-  async markAsRead(messageId: string): Promise<void> {
+  async markAsRead(phone: string, messageId: string): Promise<void> {
     await this.withRetry(async () => {
-      await this.client.post(`/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-        messaging_product: "whatsapp",
-        status: "read",
-        message_id: messageId
+      await this.client.post("/read-message", {
+        phone,
+        messageId
       });
+
+      logger.debug({ phone, messageId }, "Z-API message marked as read");
     }, "mark_as_read");
   }
 
-  async downloadMedia(mediaId: string): Promise<DownloadedMedia> {
-    const metadata = await this.withRetry(async () => {
-      const response = await this.client.get<{ url: string; mime_type?: string }>(`/${mediaId}`);
-      return response.data;
-    }, "get_media_metadata");
-
-    if (!metadata.url) {
-      throw new AppError("Mídia do WhatsApp sem URL para download.", 502, "whatsapp_media_url_missing");
-    }
-
+  async downloadMedia(mediaUrl: string, mimeTypeHint?: string | null): Promise<DownloadedMedia> {
     const mediaResponse = await this.withRetry(async () => {
-      return axios.get<ArrayBuffer>(metadata.url, {
+      return axios.get<ArrayBuffer>(mediaUrl, {
         responseType: "arraybuffer",
-        timeout: 20_000,
-        headers: {
-          Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`
-        }
+        timeout: 20_000
       });
     }, "download_media");
 
     const contentTypeHeader = mediaResponse.headers["content-type"];
     const responseMimeType = Array.isArray(contentTypeHeader) ? contentTypeHeader[0] : contentTypeHeader;
-    const mimeType = metadata.mime_type ?? (typeof responseMimeType === "string" ? responseMimeType : undefined) ?? "application/octet-stream";
+    const mimeType = mimeTypeHint ?? (typeof responseMimeType === "string" ? responseMimeType : undefined) ?? "application/octet-stream";
+
+    logger.info({ mediaUrl: redactUrl(mediaUrl), mimeType, bytes: mediaResponse.data.byteLength }, "Z-API media downloaded");
 
     return {
       buffer: Buffer.from(mediaResponse.data),
       mimeType,
-      filename: `whatsapp-${mediaId}.${extensionFromMimeType(mimeType)}`
+      filename: `zapi-media-${Date.now()}.${extensionFromMimeType(mimeType)}`
     };
   }
 
@@ -83,7 +70,7 @@ export class WhatsAppService {
         return await operation();
       } catch (error) {
         lastError = error;
-        logger.warn({ error, attempt, label }, "WhatsApp API attempt failed");
+        logger.warn({ error, attempt, label }, "Z-API attempt failed");
 
         if (attempt < 3) {
           await sleep(500 * attempt);
@@ -91,7 +78,7 @@ export class WhatsAppService {
       }
     }
 
-    throw new AppError("Falha ao comunicar com a API do WhatsApp.", 502, "whatsapp_api_error", lastError);
+    throw new AppError("Falha ao comunicar com a Z-API.", 502, "zapi_api_error", lastError);
   }
 }
 
@@ -123,4 +110,13 @@ function extensionFromMimeType(mimeType: string): string {
   }
 
   return "bin";
+}
+
+function redactUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return "[invalid-url]";
+  }
 }

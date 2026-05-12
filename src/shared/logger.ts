@@ -10,8 +10,11 @@ export const logger = pino({
     paths: [
       "req.headers.authorization",
       "req.headers.cookie",
+      "req.headers.client-token",
       "headers.authorization",
-      "WHATSAPP_ACCESS_TOKEN",
+      "headers.Client-Token",
+      "ZAPI_INSTANCE_TOKEN",
+      "ZAPI_CLIENT_TOKEN",
       "SUPABASE_SERVICE_ROLE_KEY",
       "OPENAI_API_KEY"
     ],

@@ -15,11 +15,10 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1),
   OPENAI_MODEL: z.string().default("gpt-4.1-mini"),
   OPENAI_TRANSCRIPTION_MODEL: z.string().default("gpt-4o-mini-transcribe"),
-  WHATSAPP_VERIFY_TOKEN: z.string().min(1),
-  WHATSAPP_ACCESS_TOKEN: z.string().min(1),
-  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1),
-  WHATSAPP_API_VERSION: z.string().default("v22.0"),
-  META_APP_SECRET: z.string().optional().default("")
+  ZAPI_BASE_URL: z.string().url().default("https://api.z-api.io"),
+  ZAPI_INSTANCE_ID: z.string().min(1),
+  ZAPI_INSTANCE_TOKEN: z.string().min(1),
+  ZAPI_CLIENT_TOKEN: z.string().min(1)
 });
 
 const parsed = envSchema.safeParse(process.env);

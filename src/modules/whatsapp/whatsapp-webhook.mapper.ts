@@ -1,44 +1,54 @@
-import type {
-  NormalizedWhatsAppMessage,
-  WhatsAppContact,
-  WhatsAppIncomingMessage,
-  WhatsAppWebhookPayload
-} from "../../types/whatsapp.js";
+import type { NormalizedWhatsAppMessage, ZApiWebhookPayload } from "../../types/whatsapp.js";
 
-export function normalizeWebhookMessages(payload: WhatsAppWebhookPayload): NormalizedWhatsAppMessage[] {
-  const messages: NormalizedWhatsAppMessage[] = [];
-
-  for (const entry of payload.entry ?? []) {
-    for (const change of entry.changes ?? []) {
-      const contactsByPhone = new Map<string, WhatsAppContact>();
-
-      for (const contact of change.value.contacts ?? []) {
-        contactsByPhone.set(contact.wa_id, contact);
-      }
-
-      for (const message of change.value.messages ?? []) {
-        messages.push(normalizeMessage(message, contactsByPhone.get(message.from)));
-      }
-    }
+export function normalizeWebhookMessages(payload: ZApiWebhookPayload): NormalizedWhatsAppMessage[] {
+  if (!payload.messageId || !payload.phone || payload.fromMe || payload.isGroup || payload.type !== "ReceivedCallback") {
+    return [];
   }
 
-  return messages;
+  return [
+    {
+      messageId: payload.messageId,
+      from: payload.phone,
+      contactName: payload.senderName ?? payload.chatName ?? null,
+      type: resolveMessageType(payload),
+      text: resolveText(payload),
+      mediaUrl: payload.audio?.audioUrl ?? payload.image?.imageUrl ?? null,
+      mimeType: payload.audio?.mimeType ?? payload.image?.mimeType ?? null,
+      timestamp: payload.momment ? new Date(payload.momment).toISOString() : new Date().toISOString()
+    }
+  ];
 }
 
-function normalizeMessage(
-  message: WhatsAppIncomingMessage,
-  contact?: WhatsAppContact
-): NormalizedWhatsAppMessage {
-  const type = message.type ?? "unknown";
+function resolveMessageType(payload: ZApiWebhookPayload): NormalizedWhatsAppMessage["type"] {
+  if (payload.text?.message) {
+    return "text";
+  }
 
-  return {
-    messageId: message.id,
-    from: message.from,
-    contactName: contact?.profile?.name ?? null,
-    type,
-    text: message.text?.body ?? message.button?.text ?? null,
-    mediaId: message.audio?.id ?? message.image?.id ?? null,
-    mimeType: message.audio?.mime_type ?? message.image?.mime_type ?? null,
-    timestamp: message.timestamp
-  };
+  if (payload.audio?.audioUrl) {
+    return "audio";
+  }
+
+  if (payload.image?.imageUrl) {
+    return "image";
+  }
+
+  if (payload.buttonsResponseMessage?.message) {
+    return "button";
+  }
+
+  if (payload.listResponseMessage?.message) {
+    return "list";
+  }
+
+  return "unknown";
+}
+
+function resolveText(payload: ZApiWebhookPayload): string | null {
+  return (
+    payload.text?.message ??
+    payload.buttonsResponseMessage?.message ??
+    payload.listResponseMessage?.message ??
+    payload.image?.caption ??
+    null
+  );
 }

@@ -1,6 +1,6 @@
 # Meu Laranjinha 🍊
 
-Assistente financeiro via WhatsApp com IA. O usuário manda mensagens, áudios ou fotos de notas fiscais; o backend interpreta com OpenAI, salva no Supabase e responde pelo WhatsApp Cloud API com a personalidade brasileira do Laranjinha.
+Assistente financeiro via WhatsApp com IA. O usuário manda mensagens, áudios ou fotos de notas fiscais; o backend recebe webhooks da Z-API, interpreta com OpenAI, salva no Supabase e responde pelo WhatsApp com a personalidade brasileira do Laranjinha.
 
 ## Stack
 
@@ -9,7 +9,7 @@ Assistente financeiro via WhatsApp com IA. O usuário manda mensagens, áudios o
 - Express
 - Supabase
 - OpenAI API
-- WhatsApp Cloud API
+- Z-API
 - Railway
 - pnpm
 - dotenv + Zod
@@ -46,10 +46,10 @@ supabase/
 
 ### Fluxo MVP
 
-1. Meta envia webhook para `POST /webhooks/whatsapp/webhook`.
-2. Backend valida assinatura opcional `X-Hub-Signature-256`.
+1. Z-API envia webhook para `POST /webhooks/whatsapp/webhook`.
+2. Backend valida o header `Client-Token` e, quando presente, o `instanceId`.
 3. Mensagem é normalizada e usuário é criado/buscado pelo telefone.
-4. Texto é enviado para OpenAI; áudio é baixado do WhatsApp e transcrito antes.
+4. Texto é enviado para OpenAI; áudio é baixado pela URL de mídia da Z-API e transcrito antes.
 5. IA retorna JSON estruturado:
 
 ```json
@@ -77,12 +77,12 @@ supabase/
   - `quanto gastei com ifood?`
   - `resumo da semana`
   - `resumo do mês`
-- Webhook verification da Meta.
+- Validação de webhook da Z-API.
 - Recebimento de texto, áudio e imagem.
-- Download de áudio do WhatsApp.
+- Download de áudio recebido pela Z-API.
 - Transcrição de áudio com OpenAI.
 - Estrutura para imagem/nota fiscal com resposta de OCR futuro.
-- Retry básico para WhatsApp Cloud API.
+- Retry básico para Z-API.
 - Logs, error handling, helmet, cors e rate limiting.
 
 ## Instalação local
@@ -117,11 +117,10 @@ Veja `.env.example`.
 | `OPENAI_API_KEY` | Chave da OpenAI |
 | `OPENAI_MODEL` | Modelo para interpretar e responder |
 | `OPENAI_TRANSCRIPTION_MODEL` | Modelo para transcrição de áudio |
-| `WHATSAPP_VERIFY_TOKEN` | Token configurado no webhook da Meta |
-| `WHATSAPP_ACCESS_TOKEN` | Token do WhatsApp Cloud API |
-| `WHATSAPP_PHONE_NUMBER_ID` | Phone Number ID da Meta |
-| `WHATSAPP_API_VERSION` | Versão do Graph API |
-| `META_APP_SECRET` | Opcional; valida assinatura do webhook |
+| `ZAPI_BASE_URL` | Base da Z-API. Use `https://api.z-api.io` |
+| `ZAPI_INSTANCE_ID` | ID da instância no painel da Z-API |
+| `ZAPI_INSTANCE_TOKEN` | Token da instância no painel da Z-API |
+| `ZAPI_CLIENT_TOKEN` | Token de segurança da conta, enviado no header `Client-Token` |
 
 ## Supabase setup
 
@@ -138,34 +137,89 @@ Tabelas criadas:
 
 O schema habilita RLS e cria policies para `service_role`. A service role key deve ficar apenas no servidor.
 
-## WhatsApp Cloud API
+## Z-API
+
+Documentação útil:
+
+- <https://developer.z-api.io/>
+- <https://developer.z-api.io/message/send-text.md>
+- <https://developer.z-api.io/webhooks/on-message-received.md>
+- <https://developer.z-api.io/webhooks/on-message-received-examples>
+- <https://developer.z-api.io/instance/qr-code-image.md>
+
+### Credenciais
+
+No painel da Z-API, crie uma instância e copie:
+
+- Instance ID -> `ZAPI_INSTANCE_ID`
+- Instance Token -> `ZAPI_INSTANCE_TOKEN`
+- Client Token -> `ZAPI_CLIENT_TOKEN`
+
+Use:
+
+```env
+ZAPI_BASE_URL=https://api.z-api.io
+ZAPI_INSTANCE_ID=...
+ZAPI_INSTANCE_TOKEN=...
+ZAPI_CLIENT_TOKEN=...
+```
 
 ### Callback URL
 
-Configure no app da Meta:
+Configure no painel da Z-API, no webhook de mensagens recebidas:
 
 ```txt
 https://seu-dominio.up.railway.app/webhooks/whatsapp/webhook
 ```
 
-### Verify token
-
-Use o mesmo valor de `WHATSAPP_VERIFY_TOKEN`.
-
-### Webhook fields
-
-Assine pelo menos:
-
-- `messages`
-
-### Teste local com túnel
+Para teste local:
 
 ```bash
 pnpm dev
 ngrok http 3000
 ```
 
-Use a URL pública do ngrok como callback do webhook.
+Use a URL pública do ngrok:
+
+```txt
+https://abc123.ngrok-free.app/webhooks/whatsapp/webhook
+```
+
+### Validação do webhook
+
+O backend espera que a Z-API envie:
+
+```http
+Client-Token: seu-zapi-client-token
+```
+
+Também valida `instanceId` quando o campo vem no payload.
+
+### Teste manual sem conectar o número
+
+Com a API local rodando e um ngrok aberto:
+
+```bash
+curl -X POST "https://SUA-URL-NGROK/webhooks/whatsapp/webhook" \
+  -H "Content-Type: application/json" \
+  -H "Client-Token: SEU_ZAPI_CLIENT_TOKEN" \
+  -d '{
+    "instanceId": "SEU_ZAPI_INSTANCE_ID",
+    "messageId": "teste-001",
+    "phone": "5511999999999",
+    "fromMe": false,
+    "isGroup": false,
+    "momment": 1778590000000,
+    "status": "RECEIVED",
+    "senderName": "Teste Local",
+    "type": "ReceivedCallback",
+    "text": {
+      "message": "gastei 18 reais na padaria"
+    }
+  }'
+```
+
+Esse teste exercita o webhook, OpenAI, Supabase e tentativa de resposta pela Z-API. Sem número conectado, marcar como lida ou enviar a resposta pode falhar na Z-API; isso é esperado até conectar a instância.
 
 ## OpenAI
 
@@ -180,7 +234,7 @@ O interpretador retorna intenção JSON para:
 - consultar gastos/resumos
 - pedir ajuda quando faltam dados
 
-Áudios são baixados da Meta e enviados para o modelo definido em `OPENAI_TRANSCRIPTION_MODEL`.
+Áudios chegam pelo webhook da Z-API em `audio.audioUrl`, são baixados pelo backend e enviados para o modelo definido em `OPENAI_TRANSCRIPTION_MODEL`.
 
 ## Railway deploy
 
@@ -195,7 +249,30 @@ pnpm install --frozen-lockfile && pnpm build
 pnpm start
 ```
 
-4. Configure a URL pública no webhook da Meta.
+4. Configure a URL pública no webhook de recebimento da Z-API.
+
+## QR Code da Z-API
+
+Ainda não é necessário conectar o número para deixar o backend preparado. Quando for conectar:
+
+1. Acesse o painel da Z-API.
+2. Abra a instância usada em `ZAPI_INSTANCE_ID`.
+3. Clique para conectar via QR Code.
+4. No celular que será o WhatsApp do Laranjinha, abra WhatsApp > Aparelhos conectados > Conectar aparelho.
+5. Escaneie o QR Code exibido no painel.
+6. Aguarde o status da instância ficar conectado.
+7. Configure o webhook de mensagens recebidas para:
+
+```txt
+https://SEU-DOMINIO/webhooks/whatsapp/webhook
+```
+
+Se quiser buscar o QR Code via API em uma tela própria futuramente, use o endpoint de imagem da Z-API:
+
+```txt
+GET https://api.z-api.io/instances/{ZAPI_INSTANCE_ID}/token/{ZAPI_INSTANCE_TOKEN}/qr-code/image
+Header: Client-Token: {ZAPI_CLIENT_TOKEN}
+```
 
 ## Scripts
 
@@ -236,8 +313,8 @@ Você gastou R$ 482,30 este mês. Maior categoria: alimentacao (R$ 210,00). Tô 
 
 ## Notas de produção
 
-- Use tokens permanentes/rotacionados da Meta em ambiente seguro.
+- Guarde tokens da Z-API somente no backend/Railway.
 - Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` no frontend.
-- Configure `META_APP_SECRET` para validar assinatura dos webhooks.
+- Ative o `Client-Token` no painel da Z-API e mantenha a validação ligada no backend.
 - Ajuste `RATE_LIMIT_MAX` conforme tráfego real.
 - Para OCR de nota fiscal, o módulo de imagem já isola o ponto de extensão.

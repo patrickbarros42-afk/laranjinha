@@ -4,44 +4,58 @@ import { env } from "../../config/env.js";
 import { FinanceAssistantService } from "../finance/finance-assistant.service.js";
 import { AppError } from "../../shared/errors/app-error.js";
 import { logger } from "../../shared/logger.js";
-import type { WhatsAppWebhookPayload } from "../../types/whatsapp.js";
-import { isValidMetaSignature } from "./whatsapp-signature.js";
+import type { ZApiWebhookPayload } from "../../types/whatsapp.js";
 import { normalizeWebhookMessages } from "./whatsapp-webhook.mapper.js";
 
 export class WhatsAppWebhookController {
   constructor(private readonly financeAssistant = new FinanceAssistantService()) {}
 
-  verify(request: Request, response: Response): void {
-    const mode = request.query["hub.mode"];
-    const token = request.query["hub.verify_token"];
-    const challenge = request.query["hub.challenge"];
-
-    if (mode === "subscribe" && token === env.WHATSAPP_VERIFY_TOKEN && typeof challenge === "string") {
-      response.status(200).send(challenge);
-      return;
-    }
-
-    throw new AppError("Webhook verification failed.", 403, "whatsapp_webhook_verification_failed");
+  info(_request: Request, response: Response): void {
+    response.status(200).json({
+      provider: "z-api",
+      endpoint: "/webhooks/whatsapp/webhook",
+      expectedHeader: "Client-Token"
+    });
   }
 
   async receive(request: Request, response: Response): Promise<void> {
-    const signature = request.header("x-hub-signature-256");
-
-    if (!isValidMetaSignature(request.rawBody, signature)) {
-      throw new AppError("Assinatura do webhook inválida.", 401, "invalid_meta_signature");
-    }
-
-    const payload = request.body as WhatsAppWebhookPayload;
+    const payload = request.body as ZApiWebhookPayload;
+    this.validateWebhook(request, payload);
     const messages = normalizeWebhookMessages(payload);
 
     response.status(200).json({ received: true });
+
+    logger.info(
+      {
+        provider: "z-api",
+        instanceId: payload.instanceId,
+        messageId: payload.messageId,
+        phone: payload.phone,
+        type: payload.type,
+        status: payload.status,
+        normalizedMessages: messages.length
+      },
+      "Z-API webhook received"
+    );
 
     for (const message of messages) {
       try {
         await this.financeAssistant.handleIncomingMessage(message);
       } catch (error) {
-        logger.error({ error, messageId: message.messageId, from: message.from }, "Failed to process WhatsApp message");
+        logger.error({ error, messageId: message.messageId, from: message.from }, "Failed to process Z-API message");
       }
+    }
+  }
+
+  private validateWebhook(request: Request, payload: ZApiWebhookPayload): void {
+    const clientToken = request.header("client-token");
+
+    if (clientToken !== env.ZAPI_CLIENT_TOKEN) {
+      throw new AppError("Webhook Z-API sem Client-Token válido.", 401, "invalid_zapi_client_token");
+    }
+
+    if (payload.instanceId && payload.instanceId !== env.ZAPI_INSTANCE_ID) {
+      throw new AppError("Webhook Z-API de instância inesperada.", 401, "invalid_zapi_instance");
     }
   }
 }
