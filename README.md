@@ -155,6 +155,12 @@ Para testar os repositories com uma inserção real temporária e cleanup autom�
 pnpm check:repositories
 ```
 
+Para testar a conexão real com OpenAI, prompts de interpretação e respostas do Laranjinha:
+
+```bash
+pnpm check:openai
+```
+
 ## Z-API
 
 Documentação útil:
@@ -301,6 +307,7 @@ pnpm start      # roda dist/server.js
 pnpm typecheck  # valida tipos sem emitir arquivos
 pnpm check:supabase # valida URL, service role e acesso às tabelas
 pnpm check:repositories # valida repositories com insert/query/delete de smoke test
+pnpm check:openai # valida OpenAI com exemplos reais de interpretação e resposta
 pnpm test       # executa vitest
 pnpm lint       # alias para typecheck no MVP
 ```
