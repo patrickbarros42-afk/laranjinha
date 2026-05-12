@@ -46,66 +46,51 @@ const financeIntentSchema = z.discriminatedUnion("acao", [
   })
 ]);
 
+const rawFinanceIntentSchema = z.object({
+  acao: z.enum(["registrar_transacao", "consultar", "ajuda"]),
+  tipo: z.enum(["despesa", "receita"]).nullable(),
+  valor: z.number().positive().nullable(),
+  categoria: z.string().min(1).max(80).nullable(),
+  descricao: z.string().min(1).max(120).nullable(),
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  confianca: z.number().min(0).max(1).nullable(),
+  consulta: z.enum(["gastos_dia", "gastos_mes", "gastos_categoria", "resumo_semana", "resumo_mes"]).nullable(),
+  data_ref: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  mensagem: z.string().min(1).max(240).nullable()
+});
+
 const responseJsonSchema = {
   name: "finance_intent",
   strict: true,
   schema: {
-    oneOf: [
-      {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          acao: { const: "registrar_transacao" },
-          tipo: { enum: ["despesa", "receita"] },
-          valor: { type: "number", exclusiveMinimum: 0 },
-          categoria: {
-            enum: [
-              "alimentacao",
-              "mercado",
-              "transporte",
-              "moradia",
-              "saude",
-              "educacao",
-              "lazer",
-              "assinaturas",
-              "compras",
-              "servicos",
-              "salario",
-              "freelance",
-              "investimentos",
-              "outros"
-            ]
-          },
-          descricao: { type: "string" },
-          data: { type: "string" },
-          confianca: { type: "number", minimum: 0, maximum: 1 }
-        },
-        required: ["acao", "tipo", "valor", "categoria", "descricao", "data", "confianca"]
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      acao: { enum: ["registrar_transacao", "consultar", "ajuda"] },
+      tipo: { type: ["string", "null"], enum: ["despesa", "receita", null] },
+      valor: { type: ["number", "null"], exclusiveMinimum: 0 },
+      categoria: { type: ["string", "null"] },
+      descricao: { type: ["string", "null"] },
+      data: { type: ["string", "null"] },
+      confianca: { type: ["number", "null"], minimum: 0, maximum: 1 },
+      consulta: {
+        type: ["string", "null"],
+        enum: ["gastos_dia", "gastos_mes", "gastos_categoria", "resumo_semana", "resumo_mes", null]
       },
-      {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          acao: { const: "consultar" },
-          consulta: {
-            enum: ["gastos_dia", "gastos_mes", "gastos_categoria", "resumo_semana", "resumo_mes"]
-          },
-          categoria: {
-            anyOf: [{ type: "string" }, { type: "null" }]
-          },
-          data_ref: { type: "string" }
-        },
-        required: ["acao", "consulta", "categoria", "data_ref"]
-      },
-      {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          acao: { const: "ajuda" },
-          mensagem: { type: "string" }
-        },
-        required: ["acao", "mensagem"]
-      }
+      data_ref: { type: ["string", "null"] },
+      mensagem: { type: ["string", "null"] }
+    },
+    required: [
+      "acao",
+      "tipo",
+      "valor",
+      "categoria",
+      "descricao",
+      "data",
+      "confianca",
+      "consulta",
+      "data_ref",
+      "mensagem"
     ]
   }
 } as const;
@@ -137,8 +122,8 @@ export class FinanceInterpreterService {
       throw new AppError("A IA não retornou uma interpretação.", 502, "openai_empty_interpretation");
     }
 
-    const parsedJson = JSON.parse(content) as unknown;
-    const parsedIntent = financeIntentSchema.safeParse(parsedJson);
+    const parsedJson = rawFinanceIntentSchema.parse(JSON.parse(content) as unknown);
+    const parsedIntent = financeIntentSchema.safeParse(compactIntent(parsedJson));
 
     if (!parsedIntent.success) {
       throw new AppError(
@@ -151,4 +136,32 @@ export class FinanceInterpreterService {
 
     return parsedIntent.data;
   }
+}
+
+function compactIntent(raw: z.infer<typeof rawFinanceIntentSchema>): unknown {
+  if (raw.acao === "registrar_transacao") {
+    return {
+      acao: raw.acao,
+      tipo: raw.tipo,
+      valor: raw.valor,
+      categoria: raw.categoria,
+      descricao: raw.descricao,
+      data: raw.data,
+      confianca: raw.confianca
+    };
+  }
+
+  if (raw.acao === "consultar") {
+    return {
+      acao: raw.acao,
+      consulta: raw.consulta,
+      categoria: raw.categoria,
+      data_ref: raw.data_ref
+    };
+  }
+
+  return {
+    acao: raw.acao,
+    mensagem: raw.mensagem
+  };
 }
