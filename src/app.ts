@@ -24,7 +24,7 @@ export function createApp(): express.Express {
     express.json({
       limit: "2mb",
       verify: (request, _response, buffer) => {
-        request.rawBody = Buffer.from(buffer);
+        (request as express.Request).rawBody = Buffer.from(buffer);
       }
     })
   );

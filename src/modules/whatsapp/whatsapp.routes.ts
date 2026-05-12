@@ -1,11 +1,11 @@
-import { Router } from "express";
+import { Router, type Router as ExpressRouter } from "express";
 
 import { asyncHandler } from "../../shared/utils/async-handler.js";
 import { WhatsAppWebhookController } from "./whatsapp-webhook.controller.js";
 
 const controller = new WhatsAppWebhookController();
 
-export const whatsappRoutes = Router();
+export const whatsappRoutes: ExpressRouter = Router();
 
 whatsappRoutes.get(
   "/webhook",

@@ -64,7 +64,9 @@ export class WhatsAppService {
       });
     }, "download_media");
 
-    const mimeType = metadata.mime_type ?? mediaResponse.headers["content-type"] ?? "application/octet-stream";
+    const contentTypeHeader = mediaResponse.headers["content-type"];
+    const responseMimeType = Array.isArray(contentTypeHeader) ? contentTypeHeader[0] : contentTypeHeader;
+    const mimeType = metadata.mime_type ?? (typeof responseMimeType === "string" ? responseMimeType : undefined) ?? "application/octet-stream";
 
     return {
       buffer: Buffer.from(mediaResponse.data),

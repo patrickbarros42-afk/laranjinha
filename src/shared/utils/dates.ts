@@ -9,7 +9,8 @@ export function startOfMonth(dateIso: string): string {
 }
 
 export function endOfMonth(dateIso: string): string {
-  const [year, month] = dateIso.split("-").map(Number);
+  const year = Number(dateIso.slice(0, 4));
+  const month = Number(dateIso.slice(5, 7));
   const end = new Date(Date.UTC(year, month, 0));
   return end.toISOString().slice(0, 10);
 }
